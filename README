@@ -2,7 +2,7 @@
 
 This repository contains the dataset and R code associated with the manuscript:
 
-**Dawn peaks and individual variation shape functional pulsation rhythms in the photosymbiotic jellyfish *Cassiopea***
+**Dawn peaks and individual variation shape functional pulsation rhythms in the photosymbiotic jellyfish Cassiopea***
 
 ## Repository content
 
@@ -15,7 +15,7 @@ This repository contains the dataset and R code associated with the manuscript:
 
 ## Data description
 
-The dataset includes pulsation frequency measurements from 30 *Cassiopea* spp. individuals monitored over 72 h under semi-natural conditions.
+The dataset includes pulsation frequency measurements from 30 Cassiopea spp. individuals monitored over 72 h under semi-natural conditions.
 
 Main variables include:
 
@@ -47,11 +47,10 @@ The R script includes:
 
 ## Requirements
 
-Analyses were performed in R.
+Analyses were performed in R version 4.5.1.
 
 Required R packages:
 
-```r
 readxl
 dplyr
 tidyr
