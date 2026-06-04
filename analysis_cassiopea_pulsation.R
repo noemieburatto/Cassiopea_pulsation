@@ -319,7 +319,7 @@ ggsave(file.path(fig_dir, "Figure3_lmm_cycle_phase.png"), p_fig_lmm,
        width = 6.2, height = 5.2, dpi = 300, bg = "white")
 
 ########################### #
-# 8) Cyclic GAMM (24 h) + peak time CI + MESOR + amplitude (Figure 4) ####
+# 8) Cyclic GAMM (24 h) + peak time CI + mean fitted level + half-range (Figure 4) ####
 ########################### #
 
 m_gam24 <- mgcv::gam(
@@ -366,12 +366,12 @@ idx_min_gam <- which.min(pred24_gam$fit)
 
 phase_peak_gam   <- pred24_gam$phase24_real[idx_max_gam]
 phase_trough_gam <- pred24_gam$phase24_real[idx_min_gam]
-phase_amplitude_gam    <- (pred24_gam$fit[idx_max_gam] - pred24_gam$fit[idx_min_gam]) / 2
-phase_mesor_gam        <- mean(pred24_gam$fit)
+phase_half_range_gam    <- (pred24_gam$fit[idx_max_gam] - pred24_gam$fit[idx_min_gam]) / 2
+phase_mean_fitted_level_gam        <- mean(pred24_gam$fit)
 
 cat(sprintf(
-  "\nDiel GAM (24 h, k=5, real observation times): Peak=%.1f h, Trough=%.1f h, Amplitude=%.2f, MESOR=%.2f\n",
-  phase_peak_gam, phase_trough_gam, phase_amplitude_gam, phase_mesor_gam
+  "\nDiel GAM (24 h, k=5, real observation times): Peak=%.1f h, Trough=%.1f h, Half-range=%.2f, Mean fitted level=%.2f\n",
+  phase_peak_gam, phase_trough_gam, phase_half_range_gam, phase_mean_fitted_level_gam
 ))
 
 ## ---- Coefficient simulation  ----
@@ -443,34 +443,34 @@ c(
 low_time_plot <- low_time_gam
 low_CI_plot   <- low_CI_gam
 
-## ---- MESOR 95% CI by coefficient simulation  ----
-mesor_gam <- mean(newdata_gam$fit)
+## ---- Mean fitted level 95% CI by coefficient simulation  ----
+mean_fitted_level_gam <- mean(newdata_gam$fit)
 
-mesors_gam <- apply(sim_fits_gam, 2, mean)
+mean_fitted_levels_gam <- apply(sim_fits_gam, 2, mean)
 
-mesor_CI_gam <- quantile(mesors_gam, c(0.025, 0.975))
+mean_fitted_level_CI_gam <- quantile(mean_fitted_levels_gam, c(0.025, 0.975))
 
 c(
-  MESOR  = mean(mesors_gam),
-  lower = mesor_CI_gam[1],
-  upper = mesor_CI_gam[2]
+  mean_fitted_level  = mean(mean_fitted_levels_gam),
+  lower = mean_fitted_level_CI_gam[1],
+  upper = mean_fitted_level_CI_gam[2]
 )
 
-## ---- Amplitude 95% CI by coefficient simulation  ----
+## ---- Half-range 95% CI by coefficient simulation  ----
 idx_max_gam <- which.max(newdata_gam$fit)
 idx_min_gam <- which.min(newdata_gam$fit)
-amplitude_gam    <- (newdata_gam$fit[idx_max_gam] - newdata_gam$fit[idx_min_gam]) / 2
+half_range_gam    <- (newdata_gam$fit[idx_max_gam] - newdata_gam$fit[idx_min_gam]) / 2
 
 
-get_amplitude_gam <- function(sim) (max(sim) - min(sim)) / 2
-amplitudes_gam <- apply(sim_fits_gam, 2, get_amplitude_gam)
+get_half_range_gam <- function(sim) (max(sim) - min(sim)) / 2
+half_ranges_gam <- apply(sim_fits_gam, 2, get_half_range_gam)
 
-amplitude_CI_gam <- quantile(amplitudes_gam, c(0.025, 0.975))
+half_range_CI_gam <- quantile(half_ranges_gam, c(0.025, 0.975))
 
 c(
-  amplitude  = mean(amplitudes_gam),
-  lower = amplitude_CI_gam[1],
-  upper = amplitude_CI_gam[2]
+  half_range  = mean(half_ranges_gam),
+  lower = half_range_CI_gam[1],
+  upper = half_range_CI_gam[2]
 )
 
 phase_breaks_gam <- phase_breaks |>
@@ -478,7 +478,7 @@ phase_breaks_gam <- phase_breaks |>
 x_breaks_gam <- c(0, phase_breaks_gam$phase, 24)
 x_labels_gam <- c("Midnight", as.character(phase_breaks_gam$time_point), "Midnight")
 low_label_x <- if (low_time_plot < 2) low_time_plot + 1 else low_time_plot - 1
-amplitude_x <- min(peak_time_plot + 10, 23)
+half_range_x <- min(peak_time_plot + 10, 23)
 
 ## ---- Final figure  ----
 p_fig_gam24 <- ggplot(pred24_gam, aes(phase24_real_plot, fit)) +
@@ -527,32 +527,32 @@ p_fig_gam24 <- ggplot(pred24_gam, aes(phase24_real_plot, fit)) +
   stat_summary(data = df, aes(y = pulsation_frequency, x = phase24_real_plot),
                fun = geommean, geom = "point", color = "red", size = 2) +
   
-  # MESOR line + label
-  geom_hline(yintercept = phase_mesor_gam, colour = "#8B5E3C", linewidth = 1.5) +
+  # Mean fitted level line + label
+  geom_hline(yintercept = phase_mean_fitted_level_gam, colour = "#8B5E3C", linewidth = 1.5) +
   annotate(
     "text",
     x = 6.2,
-    y = phase_mesor_gam - 4,
-    label = sprintf("MESOR = %.2f", phase_mesor_gam),
+    y = phase_mean_fitted_level_gam - 6,
+    label = sprintf("Mean fitted level = %.2f", phase_mean_fitted_level_gam),
     colour = "#8B5E3C",
     hjust = 0,
     size = 4
   ) +
   
-  # Amplitude arrow + label
+  # Half-range arrow + label
   annotate(
     "segment",
-    x = amplitude_x, xend = amplitude_x,
-    y = phase_mesor_gam - phase_amplitude_gam,
-    yend = phase_mesor_gam + phase_amplitude_gam,
+    x = half_range_x, xend = half_range_x,
+    y = phase_mean_fitted_level_gam - phase_half_range_gam,
+    yend = phase_mean_fitted_level_gam + phase_half_range_gam,
     colour = "#7E5AA7", linewidth = 1.2,
     arrow = arrow(ends = "both", length = unit(0.18, "cm"))
   ) +
   annotate(
     "text",
-    x = amplitude_x,
-    y = phase_mesor_gam + phase_amplitude_gam,
-    label = sprintf("Amplitude = %.2f", phase_amplitude_gam),
+    x = half_range_x,
+    y = phase_mean_fitted_level_gam + phase_half_range_gam,
+    label = sprintf("Half-range = %.2f", phase_half_range_gam),
     vjust = -1, colour = "#7E5AA7", size = 4
   ) +
   
@@ -565,8 +565,8 @@ p_fig_gam24 <- ggplot(pred24_gam, aes(phase24_real_plot, fit)) +
   
   labs(
     title = "Diel smooth (24 h, cyclic GAM k=5)",
-    subtitle = sprintf("Peak = %.1f h (95%% CI %.1f–%.1f) | MESOR = %.2f | Amplitude = %.2f",
-                       peak_time_gam, peak_CI_gam[1], peak_CI_gam[2], phase_mesor_gam, phase_amplitude_gam),
+    subtitle = sprintf("Peak = %.1f h (95%% CI %.1f–%.1f) | Mean fitted level = %.2f | Half-range = %.2f",
+                       peak_time_gam, peak_CI_gam[1], peak_CI_gam[2], phase_mean_fitted_level_gam, phase_half_range_gam),
     x = "Time of day (h; real observation times)",
     y = "Pulsation frequency (pulse/min)"
   ) +
@@ -808,4 +808,6 @@ scatter_env <- function(df, xvar, xlab) {
 print(scatter_env(df_sens, "oxygen_mg_l", "Oxygen (mg/L)"))
 print(scatter_env(df_sens, "ph", "pH"))
 print(scatter_env(df_sens, "temperature_c", "Temperature (°C)"))
+
+
 
